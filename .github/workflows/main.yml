@@ -28,16 +28,17 @@ jobs:
         uses: warchant/setup-sonar-scanner@v7
 
       - name: sonarqube scan
-        run: sonar-scanner
-          -Dsonar.host.url=${{secrets.SONAR_URL}}
-          -Dsonar.login=${{secrets.SONAR_TOKEN}}
-          -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}}
-          -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY}}
-          -Dsonar.sources=src/
-          -Dsonar.junit.reportsPath=target/surefire/reports/
-          -Dsonar.jacoco.reportsPath=target/jacoco.exec
-          -Dsonar.java.checkstyle.reportsPath=target/checkstyle-result.xml
-          -Dsonar.java.binaries=target/test-classes/com/visualpathit/account
+        run: |
+          sonar-scanner \
+            -Dsonar.host.url=${{secrets.SONAR_URL}} \
+            -Dsonar.login=${{secrets.SONAR_TOKEN}} \
+            -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}} \
+            -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY}} \
+            -Dsonar.sources=src/ \
+            -Dsonar.junit.reportsPath=target/surefire/reports/ \
+            -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+            -Dsonar.java.checkstyle.reportsPath=target/checkstyle-result.xml \
+            -Dsonar.java.binaries=target/test-classes/com/visualpathit/account
 
   BUILD_AND_PUBLISH:
     needs: Testing
@@ -80,7 +81,12 @@ jobs:
         run: cat ~/.kube/config
 
       - name: Login to ECR
-        run: kubectl create secret docker-registry regcred --docker-server=${{ secrets.REGISTRY}} --docker-username=AWS --docker-password=$( aws ecr get-login-password)
+        run: |
+          kubectl delete secret regcred --ignore-not-found
+          kubectl create secret docker-registry regcred \
+            --docker-server=${{ secrets.REGISTRY }} \
+            --docker-username=AWS \
+            --docker-password=$(aws ecr get-login-password)
 
       - name: Deploy Helm
         uses: bitovi/github-actions-deploy-eks-helm@v1.2.12
@@ -91,10 +97,6 @@ jobs:
           cluster-name: ${{env.EKS_CLUSTER}}
           chart-path: helm/vprofilecharts
           namespace: default
+          values: appimage=${{ secrets.REGISTRY }}/${{ env.ECR_REPOSITORY }},apptag=${{ github.run_number }}
           name: vprofile-stack
-          set: |
-            appimage=${{ secrets.REGISTRY }}/${{ env.ECR_REPOSITORY }},
-            apptag=${{ github.run_number }}
-
-
-
+            

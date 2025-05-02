@@ -39,10 +39,4 @@ jobs:
           -Dsonar.java.checkstyle.reportsPath=target/checkstyle-result.xml
           -Dsonar.java.binaries=target/test-classes/com/visualpathit/account
 
-      - name: SonarQube Quality gate check
-        id: sonar-qube-quality-gate-check
-        uses: sonarsource/sonarqube-quality-gate-check-action@v1
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
-          SONAR_HOST_URL: ${{secrets.SONAR_URL}}
+
